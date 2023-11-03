@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Location on Google Maps</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&callback=initMap" defer></script>
+    <script>
+      function initMap() {
+        // 使用浏览器的内置地理定位功能获取当前位置
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition((position) => {
+            const pos = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            };
+            
+            // 创建地图实例
+            const map = new google.maps.Map(document.getElementById("map"), {
+              center: pos,
+              zoom: 15
+            });
+            
+            // 在当前位置添加标记
+            new google.maps.Marker({
+              position: pos,
+              map: map,
+              title: "Your location"
+            });
+          }, () => {
+            handleLocationError(true, map.getCenter());
+          });
+        } else {
+          // 如果浏览器不支持地理定位
+          handleLocationError(false);
+        }
+      }
+
+      function handleLocationError(browserHasGeolocation, pos) {
+        console.log(browserHasGeolocation ?
+                      'Error: The Geolocation service failed.' :
+                      'Error: Your browser doesn\'t support geolocation.');
+      }
+
+      function sendLocation() {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          const email = document.getElementById('email').value; // 获取电子邮件地址
+
+          // 发送位置和电子邮件到 Flask 应用
+          fetch('/send-location', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              location: pos,
+              email: email
+            })
+          })
+          .then(response => response.json())
+          .then(data => {
+            alert(data.message); // 显示响应消息
+          })
+          .catch(error => {
+            console.error('Error:', error);
+          });
+        });
+      }
+    </script>
+    <style>
+      #map {
+        height: 100%;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .form-container {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        z-index: 5;
+      }
+      input[type=email], button {
+        margin-top: 5px;
+      }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="form-container">
+        <input type="email" id="email" placeholder="Recipient's email">
+        <button onclick="sendLocation()">Send Location</button>
+    </div>
+    <script>
+      // 在载入页面后初始化地图
+      window.initMap = initMap;
+    </script>
+</body>
+</html>
+<div class="form-container">
+    <input type="email" id="email" placeholder="接收者的电子邮件">
+    <button onclick="sendLocation()">发送位置</button>
+    <input type="text" id="destination" placeholder="目的地坐标格式为lat,lng">
+    <button onclick="calculateETA()">计算到达时间</button>
+</div>
+<!-- ... 现有的JavaScript ... -->
+<script>
+    // ... 现有的JavaScript函数 ...
+
+    function calculateETA() {
+        const destinationInput = document.getElementById('destination').value;
+        const destinationParts = destinationInput.split(',');
+        const destination = {
+            lat: parseFloat(destinationParts[0]),
+            lng: parseFloat(destinationParts[1])
+        };
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            const origin = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+
+            fetch('/calculate-eta', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    origin: origin,
+                    destination: destination
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('预计到达时间: ' + data.eta);
+            })
+            .catch(error => {
+                console.error('计算ETA出错:', error);
+                alert('计算到达时间出错，请重试。');
+            });
+        });
+    }
+</script>
