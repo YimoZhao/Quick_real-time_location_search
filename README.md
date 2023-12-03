@@ -31,7 +31,3 @@ This API leverages the Google Map Platform to display a user's real-time locatio
 - Ensure that you have a stable internet connection for real-time updates.
 - The application requires access to your location for accurate data representation.
 - All data is managed and processed in accordance with privacy and data protection standards.
-
-## Support
-
-For any issues or inquiries, please contact the support team at [support@example.com](mailto:support@example.com).
